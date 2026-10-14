@@ -1,0 +1,9 @@
+{
+    "targetSet": {
+        "Programs/A1Taschenrechner/A1Taschenrechner": {
+            "activeTargetType": "ITSboard"
+        }
+    },
+    "activeSolution": "../Programs/A1Taschenrechner/A1Taschenrechner.csolution.yml",
+    "activeTarget": "ITSboard"
+}
