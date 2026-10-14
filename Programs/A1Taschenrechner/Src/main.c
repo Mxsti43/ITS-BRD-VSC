@@ -1,32 +1,138 @@
 /**
- ******************************************************************************
- * @file    main.c
- * @author  Franz Korf
- * @brief   Kleines Testprogramm fuer neu erstelle Fonts.
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file    main.c
+  * @author  Franz Korf
+  * @brief   Kleines Testprogramm fuer neu erstelle Fonts.
+  ******************************************************************************
+  */
 /* Includes ------------------------------------------------------------------*/
 
+#include "stm32f4xx_hal.h"
+#include "init.h"
 #include "LCD_GUI.h"
 #include "LCD_Touch.h"
-#include "init.h"
 #include "lcd.h"
-#include "stm32f4xx_hal.h"
+#include "fontsFLASH.h"
+#include "additionalFonts.h"
+#include "error.h"
+#include "calculate.h"
+#include "operations.h"
+#include "toString.h"
+#include "token.h"
+#include "scanner.h"
+#include "stack.h"
+#include "display.h"
+#include <stdio.h>
+#include "errorhaendler.h"
+
 
 int main(void) {
-   initITSboard(); // Initialisierung des ITS Boards
+	initITSboard();    // Initialisierung des ITS Boards
+	
+	GUI_init(DEFAULT_BRIGHTNESS);   // Initialisierung des LCD Boards mit Touch
+	TP_Init(false);                 // Initialisierung des LCD Boards mit Touch
+	initDisplay();
+  // Begruessungstext	
+	//lcdPrintlnS("Hallo liebes TI-Labor (c-project)");
+	
+	int value = 0;
+	int errorHappened = 0;
+	int errNo = 0;
 
-   GUI_init(DEFAULT_BRIGHTNESS); // Initialisierung des LCD Boards mit Touch
-   TP_Init(false); // Initialisierung des LCD Boards mit Touch
+	// Test in Endlosschleife
+	while(1) {
+		//HAL_Delay(10000);
+		
+		T_token  t = nextToken();
 
-   // Begruessungstext
-   lcdPrintlnS("Hallo liebes TI-Labor (c-project)");
+		if(errorHappened != 0){
+			if(t.tok == CLEAR){
+				clearStdout();
+				errorHappened = 0;
+				errNo = C();
+			}
+		}
+		else {
+			switch (t.tok) {
+				case NUMBER:
+					clearStdout();
+					value = t.val;
+					push(value);
+					break;
 
-   // Test in Endlosschleife
-   const int POLL_DELAY = 10000;
-   while (1) {
-      HAL_Delay(POLL_DELAY);
-   }
+				case PLUS:
+					clearStdout();
+					errNo = add();
+					break;
+
+				case MINUS:
+					clearStdout();
+					errNo = subtract();
+					break;
+
+				case MULT:
+					clearStdout();
+					errNo = multiply();
+					break;
+
+				case DIV:
+					clearStdout();
+					errNo = divide();
+					break;
+
+				case PRT:
+					clearStdout();
+					errNo = p();
+					break;
+
+				case SWAP:
+					clearStdout();
+					errNo = r();
+					break;
+
+				case PRT_ALL:
+					clearStdout();
+					errNo = P();
+					break;
+
+				case CLEAR:
+					clearStdout();
+					errNo = C();
+					break;
+
+				case DOUBLE:
+					clearStdout();
+					//push(value);	
+					errNo = d();
+					break;
+				case ENTER:
+					//push(value);
+					break;
+
+				case UNEXPECTED:
+					clearStdout();
+					errNo = UnexpectedToken;
+					break;
+
+				case OVERFLOW:
+					clearStdout();
+					errNo = StackOverflow;
+					break;
+
+				default:
+					clearStdout();
+					errNo = UnknownToken;
+					break;
+			}
+		}
+
+		if(errorHappened == 0 && errNo != 0) {
+			displayError(errNo);
+			errorHappened = 1;
+		}
+
+
+	}
 }
 
 // EOF
